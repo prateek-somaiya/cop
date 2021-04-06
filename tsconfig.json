@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "allowJs": true,
+    "sourceMap": false,
+    "outDir": "./dist",
+    "strict": true,
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node"],
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
