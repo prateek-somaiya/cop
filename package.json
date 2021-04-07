@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .ts,.js",
     "start": "set debug=* && ts-node-dev --inspect --respawn --transpile-only ./src/index.ts",
     "start2": "set debug=* && ts-node-dev --inspect --respawn --transpile-only ./src/index.ts -a 048760275038 155551170633 -x test.xlsx -j test.json",
-    "build": "tsc && npm link -f"
+    "build": "tsc"
   },
   "author": "Prateek Somaiya",
   "license": "ISC",
