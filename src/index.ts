@@ -131,7 +131,7 @@ const writeFiles = (recommendations: AWS.ComputeOptimizer.InstanceRecommendation
   args.regions =
     args.regions && args.regions.length === 1 && args.regions[0] === 'all' ? config.allRegions : args.regions;
 
-  if (!(args.excel && args.json)) {
+  if (!(args.excel || args.json)) {
     yargs.showHelp();
     console.log('\nYou need to specify at least one output, either json or excel.');
     process.exit(1);
