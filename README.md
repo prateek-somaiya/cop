@@ -2,7 +2,7 @@
 
 Command line utility to generate AWS Compute Optimizer recommendations for multiple AWS Accounts
 
-# Pre-requisites
+## Pre-requisites
 
 - Compute Optimizer should be enabled!
 - AWS credentials should be configured in the `~/.aws/credentials` file. See https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
@@ -10,15 +10,15 @@ Command line utility to generate AWS Compute Optimizer recommendations for multi
 - If running from an Organization's management account, make sure Compute Optimizer is enabled at an Organization Level
 - This CLI uses the `[default]` credentials
 
-# Installation
+## Installation
 
 `npm i -g prateek-somaiya/cop`
 
-# Usage
+## Usage
 
 `cop [options]`
 
-# Options
+## Options
 
 ```
       --version   Show version number                                  [boolean]
@@ -29,7 +29,7 @@ Command line utility to generate AWS Compute Optimizer recommendations for multi
       --help      Show help                                            [boolean]
 ```
 
-# Examples
+## Examples
 
 | Command                                            | Expected Output                                                                                                     |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
