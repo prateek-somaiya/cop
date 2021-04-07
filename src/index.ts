@@ -71,14 +71,14 @@ const writeFiles = (recommendations: AWS.ComputeOptimizer.InstanceRecommendation
 };
 
 (async () => {
-  const banner = figlet.textSync('comop', { font: 'Doom', horizontalLayout: 'full' });
+  const banner = figlet.textSync('cop', { font: 'Doom', horizontalLayout: 'full' });
   console.log(banner);
   console.log(
-    '\ncomop - command line utility to generate AWS Compute Optimizer recommendations for multiple AWS Accounts\n',
+    '\ncop - Command line utility to generate AWS Compute Optimizer recommendations for multiple AWS Accounts\n',
   );
 
   const args = yargs
-    .scriptName('comop')
+    .scriptName('cop')
     .usage('Usage: $0 [args]')
     .options({
       accounts: {
@@ -101,19 +101,41 @@ const writeFiles = (recommendations: AWS.ComputeOptimizer.InstanceRecommendation
         type: 'string',
         alias: 'x',
         demandOption: false,
-        description: 'Excel filename',
+        description: 'Output Excel filename',
       },
       json: {
         type: 'string',
         alias: 'j',
         demandOption: false,
-        description: 'JSON filename',
+        description: 'Output JSON filename',
       },
     })
+    .example(
+      '$0 -a 123 456 -j test.json',
+      'Generate the recommendations for accounts 123 and 456 for all regions, write to test.json',
+    )
+    .example(
+      '$0 -r us-east-1 -x test.xlsx',
+      'Generate the recommendations for all accounts in the Organization for us-east-1 region, write to test.xlsx',
+    )
+    .example(
+      '$0 -a 123 456 -r us-east-1 us-west-2 -x test.xlsx',
+      'Generate the recommendations for accounts 123 and 456 for us-east-1 and us-west-2 regions, write to test.xlsx',
+    )
+    .example(
+      '$0 -a -j test.json -x test.xlsx',
+      'Generate the recommendations for all accounts in the Organization for all regions, write to test.json and test.xlsx',
+    )
     .help().argv;
 
   args.regions =
     args.regions && args.regions.length === 1 && args.regions[0] === 'all' ? config.allRegions : args.regions;
+
+  if (!(args.excel && args.json)) {
+    yargs.showHelp();
+    console.log('\nYou need to specify at least one output, either json or excel.');
+    process.exit(1);
+  }
 
   const accounts = await getAccounts(args);
   const recommendations = await getRecommendations(accounts, args.regions);

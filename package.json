@@ -1,16 +1,16 @@
 {
-  "name": "cost-optimization-v2",
-  "version": "1.0.0",
-  "description": "",
+  "name": "cop",
+  "version": "0.0.1",
+  "description": "Command line utility to generate AWS Compute Optimizer recommendations for multiple AWS Accounts",
   "main": "./dist/index.js",
   "bin": {
-    "comop": "./dist/index.js"
+    "cop": "./dist/index.js"
   },
   "scripts": {
     "lint": "eslint . --ext .ts,.js",
     "start": "set debug=* && ts-node-dev --inspect --respawn --transpile-only ./src/index.ts",
     "start2": "set debug=* && ts-node-dev --inspect --respawn --transpile-only ./src/index.ts -a 048760275038 155551170633 -x test.xlsx -j test.json",
-    "build": "tsc -p ."
+    "build": "tsc && npm link -f"
   },
   "author": "Prateek Somaiya",
   "license": "ISC",
