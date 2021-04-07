@@ -2,9 +2,9 @@
   "name": "cop",
   "version": "0.0.1",
   "description": "Command line utility to generate AWS Compute Optimizer recommendations for multiple AWS Accounts",
-  "main": "./dist/index.js",
+  "main": "./bin/index.js",
   "bin": {
-    "cop": "./dist/index.js"
+    "cop": "./bin/index.js"
   },
   "scripts": {
     "lint": "eslint . --ext .ts,.js",
