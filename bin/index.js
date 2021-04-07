@@ -108,7 +108,7 @@ const writeFiles = (recommendations, args) => {
         .help().argv;
     args.regions =
         args.regions && args.regions.length === 1 && args.regions[0] === 'all' ? config_1.default.allRegions : args.regions;
-    if (!(args.excel && args.json)) {
+    if (!(args.excel || args.json)) {
         yargs_1.default.showHelp();
         console.log('\nYou need to specify at least one output, either json or excel.');
         process.exit(1);
