@@ -2,7 +2,7 @@
   "name": "cop",
   "version": "0.0.1",
   "description": "Command line utility to generate AWS Compute Optimizer recommendations for multiple AWS Accounts",
-  "main": "./bin/index.js",
+  "main": "./src/index.ts",
   "bin": {
     "cop": "./bin/index.js"
   },
@@ -13,7 +13,23 @@
     "build": "tsc"
   },
   "author": "Prateek Somaiya",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prateek-somaiya/cop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/prateek-somaiya/cop/issues"
+  },
+  "homepage": "https://github.com/prateek-somaiya/cop#readme",
+  "dependencies": {
+    "aws-sdk": "^2.879.0",
+    "figlet": "^1.5.0",
+    "ora": "^5.4.0",
+    "p-limit": "^3.1.0",
+    "xlsx": "^0.16.9",
+    "yargs": "^16.2.0"
+  },
   "devDependencies": {
     "@types/figlet": "^1.5.0",
     "@types/node": "^14.14.37",
@@ -26,13 +42,5 @@
     "prettier": "^2.2.1",
     "ts-node-dev": "^1.1.6",
     "typescript": "^4.2.3"
-  },
-  "dependencies": {
-    "aws-sdk": "^2.879.0",
-    "figlet": "^1.5.0",
-    "ora": "^5.4.0",
-    "p-limit": "^3.1.0",
-    "xlsx": "^0.16.9",
-    "yargs": "^16.2.0"
   }
 }
