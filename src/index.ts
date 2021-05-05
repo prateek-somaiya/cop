@@ -8,6 +8,11 @@ import awsUtil from './aws-util';
 import xlsxUtil from './xlsx-util';
 import config from './config';
 
+export interface ICopRecommendations {
+  iRecommendations?: AWS.ComputeOptimizer.InstanceRecommendation[];
+  vRecommendations?: AWS.ComputeOptimizer.VolumeRecommendation[];
+}
+
 const getAccounts = async (args: any) => {
   if (args.accounts && args.accounts.length === 1 && args.accounts[0] === 'all') {
     const spinner = ora(`Fetching all Organization Accounts`).start();
@@ -25,10 +30,10 @@ const getAccounts = async (args: any) => {
   return args.accounts;
 };
 
-const getRecommendations = async (accounts: string[], regions: string[]) => {
+const getInstanceRecommendations = async (accounts: string[], regions: string[]) => {
   const totalAccounts = accounts.length;
   let done = 0;
-  const spinner = ora(`Fetching Recommendations for ${done}/${totalAccounts} Accounts`).start();
+  const spinner = ora(`Fetching Instance Recommendations for ${done}/${totalAccounts} Accounts`).start();
 
   if (accounts.length > 0) {
     const recommendations = (
@@ -37,7 +42,7 @@ const getRecommendations = async (accounts: string[], regions: string[]) => {
           try {
             const recommendation = await awsUtil.fetchComputeOptimizerInstanceRecommendations([account], regions);
             done++;
-            spinner.text = `Fetched Recommendations for ${done}/${totalAccounts} Accounts`;
+            spinner.text = `Fetched Instance Recommendations for ${done}/${totalAccounts} Accounts`;
             return recommendation;
           } catch (error) {
             console.log(error);
@@ -48,7 +53,7 @@ const getRecommendations = async (accounts: string[], regions: string[]) => {
     )
       .filter(e => e.status === 'fulfilled')
       .flatMap(e => (<PromiseFulfilledResult<AWS.ComputeOptimizer.InstanceRecommendation[]>>e).value);
-    spinner.succeed(`Fetched Recommendations for ${done}/${totalAccounts} Accounts`);
+    spinner.succeed(`Fetched Instance Recommendations for ${done}/${totalAccounts} Accounts`);
     return recommendations;
   }
 
@@ -56,10 +61,46 @@ const getRecommendations = async (accounts: string[], regions: string[]) => {
   return [];
 };
 
-const writeFiles = (recommendations: AWS.ComputeOptimizer.InstanceRecommendation[], args: any) => {
+const getVolumeRecommendations = async (accounts: string[], regions: string[]) => {
+  const totalAccounts = accounts.length;
+  let done = 0;
+  const spinner = ora(`Fetching Volume Recommendations for ${done}/${totalAccounts} Accounts`).start();
+
+  if (accounts.length > 0) {
+    const recommendations = (
+      await Promise.allSettled(
+        accounts.flatMap(async account => {
+          try {
+            const recommendation = await awsUtil.fetchComputeOptimizerVolumeRecommendations([account], regions);
+            done++;
+            spinner.text = `Fetched Volume Recommendations for ${done}/${totalAccounts} Accounts`;
+            return recommendation;
+          } catch (error) {
+            console.log(error);
+          }
+          return [];
+        }),
+      )
+    )
+      .filter(e => e.status === 'fulfilled')
+      .flatMap(e => (<PromiseFulfilledResult<AWS.ComputeOptimizer.VolumeRecommendation[]>>e).value);
+    spinner.succeed(`Fetched Volume Recommendations for ${done}/${totalAccounts} Accounts`);
+    return recommendations;
+  }
+
+  spinner.succeed('No Recommendations to fetch');
+  return [];
+};
+
+const getRecommendations = async (accounts: string[], regions: string[]) => ({
+  iRecommendations: await getInstanceRecommendations(accounts, regions),
+  vRecommendations: await getVolumeRecommendations(accounts, regions),
+});
+
+const writeFiles = (recommendations: ICopRecommendations, args: any) => {
   if (args.excel) {
     const spinner = ora(`Writing Recommendations to ${args.excel}`).start();
-    xlsxUtil.instanceRecommendationsToXlsx(args.excel, recommendations);
+    xlsxUtil.recommendationsToXlsx(args.excel, recommendations);
     spinner.succeed(`Created ${args.excel}`);
   }
 
@@ -130,6 +171,8 @@ const writeFiles = (recommendations: AWS.ComputeOptimizer.InstanceRecommendation
 
   args.regions =
     args.regions && args.regions.length === 1 && args.regions[0] === 'all' ? config.allRegions : args.regions;
+
+  args.accounts = args.accounts && args.accounts.length === 0 ? ['all'] : args.accounts;
 
   if (!(args.excel || args.json)) {
     yargs.showHelp();
