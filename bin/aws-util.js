@@ -20,7 +20,7 @@ const fetchAll = async (instance, operation, params, nextTokenName) => {
     return new Promise(async (resolve, reject) => {
         try {
             do {
-                const requestParams = next ? { [nextTokenName]: next } : params;
+                const requestParams = next ? { ...params, [nextTokenName]: next } : params;
                 const result = await limit(() => instance.makeRequest(operation, requestParams).promise());
                 next = result && result[nextTokenName] ? result[nextTokenName] : null;
                 response = response.concat(result);
@@ -32,13 +32,23 @@ const fetchAll = async (instance, operation, params, nextTokenName) => {
         }
     });
 };
-const fetchComputeOptimizerRecommendationForAccount = async (account, region) => (await fetchAll(new AWS.ComputeOptimizer({ region: region }), 'getEC2InstanceRecommendations', { accountIds: [account] }, 'nextToken'))
+const fetchComputeOptimizerInstanceRecommendationForAccount = async (account, region) => (await fetchAll(new AWS.ComputeOptimizer({ region: region }), 'getEC2InstanceRecommendations', { accountIds: [account] }, 'nextToken'))
     .filter(e => e.instanceRecommendations != null)
     .flatMap(e => e.instanceRecommendations);
+const fetchComputeOptimizerVolumeRecommendationForAccount = async (account, region) => (await fetchAll(new AWS.ComputeOptimizer({ region: region }), 'getEBSVolumeRecommendations', { accountIds: [account] }, 'nextToken'))
+    .filter(e => e.volumeRecommendations != null)
+    .flatMap(e => e.volumeRecommendations);
 const awsUtil = {
     fetchComputeOptimizerInstanceRecommendations: async (accountIds = [], regions) => (await Promise.allSettled((accountIds && accountIds.length > 0
         ? accountIds
-        : (await awsUtil.getAllMemberAccounts()).filter(e => e?.Id != null).map(e => e.Id)).flatMap(async (accountId) => (await Promise.allSettled(regions.flatMap(region => fetchComputeOptimizerRecommendationForAccount(accountId, region))))
+        : (await awsUtil.getAllMemberAccounts()).filter(e => e?.Id != null).map(e => e.Id)).flatMap(async (accountId) => (await Promise.allSettled(regions.flatMap(region => fetchComputeOptimizerInstanceRecommendationForAccount(accountId, region))))
+        .filter(e => e.status === 'fulfilled')
+        .flatMap(e => e.value))))
+        .filter(e => e.status === 'fulfilled')
+        .flatMap(e => e.value),
+    fetchComputeOptimizerVolumeRecommendations: async (accountIds = [], regions) => (await Promise.allSettled((accountIds && accountIds.length > 0
+        ? accountIds
+        : (await awsUtil.getAllMemberAccounts()).filter(e => e?.Id != null).map(e => e.Id)).flatMap(async (accountId) => (await Promise.allSettled(regions.flatMap(region => fetchComputeOptimizerVolumeRecommendationForAccount(accountId, region))))
         .filter(e => e.status === 'fulfilled')
         .flatMap(e => e.value))))
         .filter(e => e.status === 'fulfilled')

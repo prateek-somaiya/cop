@@ -92,10 +92,11 @@ const getVolumeRecommendations = async (accounts: string[], regions: string[]) =
   return [];
 };
 
-const getRecommendations = async (accounts: string[], regions: string[]) => ({
-  iRecommendations: await getInstanceRecommendations(accounts, regions),
-  vRecommendations: await getVolumeRecommendations(accounts, regions),
-});
+const getRecommendations = async (args: any, accounts: string[], regions: string[]) => {
+  const iRecommendations = args.instance ? await getInstanceRecommendations(accounts, regions) : undefined;
+  const vRecommendations = args.volume ? await getVolumeRecommendations(accounts, regions) : undefined;
+  return { iRecommendations, vRecommendations };
+};
 
 const writeFiles = (recommendations: ICopRecommendations, args: any) => {
   if (args.excel) {
@@ -138,6 +139,18 @@ const writeFiles = (recommendations: ICopRecommendations, args: any) => {
         default: ['all'],
         defaultDescription: 'All Regions',
       },
+      instance: {
+        type: 'boolean',
+        alias: 'i',
+        demandOption: false,
+        description: 'Generate instance recommendations',
+      },
+      volume: {
+        type: 'boolean',
+        alias: 'v',
+        demandOption: false,
+        description: 'Generate volume recommendations',
+      },
       excel: {
         type: 'string',
         alias: 'x',
@@ -152,20 +165,20 @@ const writeFiles = (recommendations: ICopRecommendations, args: any) => {
       },
     })
     .example(
-      '$0 -a 123 456 -j test.json',
-      'Generate the recommendations for accounts 123 and 456 for all regions, write to test.json',
+      '$0 -i -a 123 456 -j test.json',
+      'Generate instance recommendations for accounts 123 and 456 for all regions, write to test.json',
     )
     .example(
-      '$0 -r us-east-1 -x test.xlsx',
-      'Generate the recommendations for all accounts in the Organization for us-east-1 region, write to test.xlsx',
+      '$0 -v -r us-east-1 -x test.xlsx',
+      'Generate volume recommendations for all accounts in the Organization for us-east-1 region, write to test.xlsx',
     )
     .example(
-      '$0 -a 123 456 -r us-east-1 us-west-2 -x test.xlsx',
-      'Generate the recommendations for accounts 123 and 456 for us-east-1 and us-west-2 regions, write to test.xlsx',
+      '$0 -v -a 123 456 -r us-east-1 us-west-2 -x test.xlsx',
+      'Generate volume recommendations for accounts 123 and 456 for us-east-1 and us-west-2 regions, write to test.xlsx',
     )
     .example(
-      '$0 -a -j test.json -x test.xlsx',
-      'Generate the recommendations for all accounts in the Organization for all regions, write to test.json and test.xlsx',
+      '$0 -i -a -j test.json -x test.xlsx',
+      'Generate instance recommendations for all accounts in the Organization for all regions, write to test.json and test.xlsx',
     )
     .help().argv;
 
@@ -180,7 +193,13 @@ const writeFiles = (recommendations: ICopRecommendations, args: any) => {
     process.exit(1);
   }
 
+  if (!(args.instance || args.volume)) {
+    yargs.showHelp();
+    console.log('\nYou need to specify at least one recommendation, either instance or volume.');
+    process.exit(1);
+  }
+
   const accounts = await getAccounts(args);
-  const recommendations = await getRecommendations(accounts, args.regions);
+  const recommendations = await getRecommendations(args, accounts, args.regions);
   writeFiles(recommendations, args);
 })();

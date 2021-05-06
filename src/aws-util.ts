@@ -16,7 +16,7 @@ const fetchAll = async <T>(
   return new Promise<T[]>(async (resolve, reject) => {
     try {
       do {
-        const requestParams: any = next ? { [nextTokenName]: next } : params;
+        const requestParams: any = next ? { ...params, [nextTokenName]: next } : params;
         const result = await limit(() => instance.makeRequest(operation, requestParams).promise());
         next = result && result[nextTokenName] ? result[nextTokenName] : null;
         response = response.concat(result);

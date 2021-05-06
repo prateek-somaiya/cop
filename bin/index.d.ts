@@ -1,2 +1,5 @@
 #!/usr/bin/env node
-export {};
+export interface ICopRecommendations {
+    iRecommendations?: AWS.ComputeOptimizer.InstanceRecommendation[];
+    vRecommendations?: AWS.ComputeOptimizer.VolumeRecommendation[];
+}

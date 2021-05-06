@@ -27,16 +27,16 @@ const getAccounts = async (args) => {
     }
     return args.accounts;
 };
-const getRecommendations = async (accounts, regions) => {
+const getInstanceRecommendations = async (accounts, regions) => {
     const totalAccounts = accounts.length;
     let done = 0;
-    const spinner = ora_1.default(`Fetching Recommendations for ${done}/${totalAccounts} Accounts`).start();
+    const spinner = ora_1.default(`Fetching Instance Recommendations for ${done}/${totalAccounts} Accounts`).start();
     if (accounts.length > 0) {
         const recommendations = (await Promise.allSettled(accounts.flatMap(async (account) => {
             try {
                 const recommendation = await aws_util_1.default.fetchComputeOptimizerInstanceRecommendations([account], regions);
                 done++;
-                spinner.text = `Fetched Recommendations for ${done}/${totalAccounts} Accounts`;
+                spinner.text = `Fetched Instance Recommendations for ${done}/${totalAccounts} Accounts`;
                 return recommendation;
             }
             catch (error) {
@@ -46,16 +46,46 @@ const getRecommendations = async (accounts, regions) => {
         })))
             .filter(e => e.status === 'fulfilled')
             .flatMap(e => e.value);
-        spinner.succeed(`Fetched Recommendations for ${done}/${totalAccounts} Accounts`);
+        spinner.succeed(`Fetched Instance Recommendations for ${done}/${totalAccounts} Accounts`);
         return recommendations;
     }
     spinner.succeed('No Recommendations to fetch');
     return [];
 };
+const getVolumeRecommendations = async (accounts, regions) => {
+    const totalAccounts = accounts.length;
+    let done = 0;
+    const spinner = ora_1.default(`Fetching Volume Recommendations for ${done}/${totalAccounts} Accounts`).start();
+    if (accounts.length > 0) {
+        const recommendations = (await Promise.allSettled(accounts.flatMap(async (account) => {
+            try {
+                const recommendation = await aws_util_1.default.fetchComputeOptimizerVolumeRecommendations([account], regions);
+                done++;
+                spinner.text = `Fetched Volume Recommendations for ${done}/${totalAccounts} Accounts`;
+                return recommendation;
+            }
+            catch (error) {
+                console.log(error);
+            }
+            return [];
+        })))
+            .filter(e => e.status === 'fulfilled')
+            .flatMap(e => e.value);
+        spinner.succeed(`Fetched Volume Recommendations for ${done}/${totalAccounts} Accounts`);
+        return recommendations;
+    }
+    spinner.succeed('No Recommendations to fetch');
+    return [];
+};
+const getRecommendations = async (args, accounts, regions) => {
+    const iRecommendations = args.instance ? await getInstanceRecommendations(accounts, regions) : undefined;
+    const vRecommendations = args.volume ? await getVolumeRecommendations(accounts, regions) : undefined;
+    return { iRecommendations, vRecommendations };
+};
 const writeFiles = (recommendations, args) => {
     if (args.excel) {
         const spinner = ora_1.default(`Writing Recommendations to ${args.excel}`).start();
-        xlsx_util_1.default.instanceRecommendationsToXlsx(args.excel, recommendations);
+        xlsx_util_1.default.recommendationsToXlsx(args.excel, recommendations);
         spinner.succeed(`Created ${args.excel}`);
     }
     if (args.json) {
@@ -88,6 +118,18 @@ const writeFiles = (recommendations, args) => {
             default: ['all'],
             defaultDescription: 'All Regions',
         },
+        instance: {
+            type: 'boolean',
+            alias: 'i',
+            demandOption: false,
+            description: 'Generate instance recommendations',
+        },
+        volume: {
+            type: 'boolean',
+            alias: 'v',
+            demandOption: false,
+            description: 'Generate volume recommendations',
+        },
         excel: {
             type: 'string',
             alias: 'x',
@@ -101,19 +143,25 @@ const writeFiles = (recommendations, args) => {
             description: 'Output JSON filename',
         },
     })
-        .example('$0 -a 123 456 -j test.json', 'Generate the recommendations for accounts 123 and 456 for all regions, write to test.json')
-        .example('$0 -r us-east-1 -x test.xlsx', 'Generate the recommendations for all accounts in the Organization for us-east-1 region, write to test.xlsx')
-        .example('$0 -a 123 456 -r us-east-1 us-west-2 -x test.xlsx', 'Generate the recommendations for accounts 123 and 456 for us-east-1 and us-west-2 regions, write to test.xlsx')
-        .example('$0 -a -j test.json -x test.xlsx', 'Generate the recommendations for all accounts in the Organization for all regions, write to test.json and test.xlsx')
+        .example('$0 -i -a 123 456 -j test.json', 'Generate instance recommendations for accounts 123 and 456 for all regions, write to test.json')
+        .example('$0 -v -r us-east-1 -x test.xlsx', 'Generate volume recommendations for all accounts in the Organization for us-east-1 region, write to test.xlsx')
+        .example('$0 -v -a 123 456 -r us-east-1 us-west-2 -x test.xlsx', 'Generate volume recommendations for accounts 123 and 456 for us-east-1 and us-west-2 regions, write to test.xlsx')
+        .example('$0 -i -a -j test.json -x test.xlsx', 'Generate instance recommendations for all accounts in the Organization for all regions, write to test.json and test.xlsx')
         .help().argv;
     args.regions =
         args.regions && args.regions.length === 1 && args.regions[0] === 'all' ? config_1.default.allRegions : args.regions;
+    args.accounts = args.accounts && args.accounts.length === 0 ? ['all'] : args.accounts;
     if (!(args.excel || args.json)) {
         yargs_1.default.showHelp();
         console.log('\nYou need to specify at least one output, either json or excel.');
         process.exit(1);
     }
+    if (!(args.instance || args.volume)) {
+        yargs_1.default.showHelp();
+        console.log('\nYou need to specify at least one recommendation, either instance or volume.');
+        process.exit(1);
+    }
     const accounts = await getAccounts(args);
-    const recommendations = await getRecommendations(accounts, args.regions);
+    const recommendations = await getRecommendations(args, accounts, args.regions);
     writeFiles(recommendations, args);
 })();
